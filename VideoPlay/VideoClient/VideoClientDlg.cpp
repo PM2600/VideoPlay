@@ -7,6 +7,7 @@
 #include "VideoClient.h"
 #include "VideoClientDlg.h"
 #include "afxdialogex.h"
+#include "VideoClientController.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -61,12 +62,13 @@ BOOL CVideoClientDlg::OnInitDialog()
 
 	// TODO: 在此添加额外的初始化代码
 	SetTimer(0, 500, NULL);
-	m_pos.SetRange(0, 100);
+	m_pos.SetRange(0, 1);
 	m_volume.SetRange(0, 100);
-	m_volume.SetTic(10);
 	m_volume.SetTicFreq(20);
 	SetDlgItemText(IDC_STATIC_VOLUME, _T("100%"));
 	SetDlgItemText(IDC_STATIC_TIME, _T("--:--:-- / --:--:--"));
+	m_controller->SetWnd(GetSafeHwnd());
+	m_url.SetWindowText(_T("file:///D:\\2.5\\Github\\VideoPlay\\VideoPlay\\VideoClient\\StreetFighter6.mp4"));
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -114,6 +116,14 @@ void CVideoClientDlg::OnTimer(UINT_PTR nIDEvent)
 	if (nIDEvent == 0) {
 		//更新音量
 		//更新播放时间
+		float pos = m_controller->VideoCtrl(EVLC_GET_POSITION);
+		if (pos != -1.0f) {
+			static int length = m_controller->VideoCtrl();
+			CString strPos;
+			strPos.Format(_T("%f"), pos);
+			SetDlgItemText(IDC_STATIC_TIME, strPos);
+			m_pos.SetPos();
+		}
 	}
 	CDialogEx::OnTimer(nIDEvent);
 }
@@ -129,14 +139,19 @@ void CVideoClientDlg::OnDestroy()
 
 void CVideoClientDlg::OnBnClickedBtnPlay()
 {
-
 	if (m_status == false) {
+		CString url;
+		m_url.GetWindowText(url);
+
+		m_controller->SetMedia(m_controller->Unicode2Utf8((LPCTSTR)url));
 		m_btnPlay.SetWindowText(_T("暂停"));
 		m_status = true;
+		m_controller->VideoCtrl(EVLC_PLAY);
 	}
 	else {
 		m_btnPlay.SetWindowText(_T("播放"));
 		m_status = false;
+		m_controller->VideoCtrl(EVLC_PAUSE);
 	}
 }
 
@@ -145,7 +160,7 @@ void CVideoClientDlg::OnBnClickedBtnStop()
 {
 	m_btnPlay.SetWindowText(_T("播放"));
 	m_status = false;
-
+	m_controller->VideoCtrl(EVLC_STOP);
 }
 
 
@@ -179,6 +194,7 @@ void CVideoClientDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 		CString strPosition;
 		strPosition.Format(_T("%d%%"), nPos);
 		SetDlgItemText(IDC_STATIC_TIME, strPosition);
+		m_controller->SetPosition(float(nPos));
 	}
 	CDialogEx::OnHScroll(nSBCode, nPos, pScrollBar);
 }
@@ -192,6 +208,7 @@ void CVideoClientDlg::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 		CString strVolume;
 		strVolume.Format(_T("%d%%"), 100 - nPos);
 		SetDlgItemText(IDC_STATIC_VOLUME, strVolume);
+		m_controller->SetVolume(100 - nPos);
 	}
 
 	CDialogEx::OnVScroll(nSBCode, nPos, pScrollBar);
