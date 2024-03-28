@@ -41,6 +41,7 @@ public:
 	void SetPosition(float pos);
 	int GetVolume();
 	int SetVolume(int volume);
+	float GeLength();
 	VlcSize GetMediaInfo();
 	std::string Unicode2Utf8(const std::wstring& strIn);
 protected:

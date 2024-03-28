@@ -118,7 +118,8 @@ void CVideoClientDlg::OnTimer(UINT_PTR nIDEvent)
 		//更新播放时间
 		float pos = m_controller->VideoCtrl(EVLC_GET_POSITION);
 		if (pos != -1.0f) {
-			static int length = m_controller->VideoCtrl();
+			static float length = m_controller->VideoCtrl(EVLC_GET_LENGTH);
+			m_pos.SetRange(0, length);
 			CString strPos;
 			strPos.Format(_T("%f"), pos);
 			SetDlgItemText(IDC_STATIC_TIME, strPos);

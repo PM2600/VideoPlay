@@ -55,6 +55,8 @@ float VideoClientController::VideoCtrl(EVlcCommand cmd)
 		return float(m_vlc.GetVolume());
 	case EVLC_GET_POSITION:
 		return m_vlc.GetPosition();
+	case EVLC_GET_LENGTH:
+		return m_vlc.GeLength();
 	default:
 		break;
 	}

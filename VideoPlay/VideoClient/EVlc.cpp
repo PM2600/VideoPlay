@@ -112,6 +112,15 @@ int EVlc::SetVolume(int volume)
 	return libvlc_audio_set_volume(m_player, volume);
 }
 
+float EVlc::GeLength()
+{
+	if (!m_player || !m_instance || !m_media)
+		return -0.1f;
+	libvlc_time_t tm = libvlc_media_player_get_length(m_player);
+	float ret = tm / 1000.0f;
+	return ret;
+}
+
 VlcSize EVlc::GetMediaInfo()
 {
 	if (!m_player || !m_instance || !m_media)
