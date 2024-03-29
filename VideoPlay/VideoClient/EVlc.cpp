@@ -122,7 +122,7 @@ int EVlc::SetVolume(int volume)
 float EVlc::GeLength()
 {
 	if (!m_player || !m_instance || !m_media)
-		return -0.1f;
+		return -1.0f;
 	libvlc_time_t tm = libvlc_media_player_get_length(m_player);
 	float ret = tm / 1000.0f;
 	return ret;
