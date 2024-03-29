@@ -49,6 +49,13 @@ int EVlc::SetMedia(const std::string& strUrl)
 	m_player = libvlc_media_player_new_from_media(m_media);
 	if (!m_player)
 		return -3;
+
+	CRect rect;
+	GetWindowRect(m_hwnd, rect);
+	std::string strRatio = "";
+	strRatio.resize(32);
+	sprintf((char*)strRatio.c_str(), "%d:%d", rect.Width(), rect.Height());
+	libvlc_video_set_aspect_ratio(m_player, strRatio.c_str());
 	libvlc_media_player_set_hwnd(m_player, m_hwnd);
 	return 0;
 }

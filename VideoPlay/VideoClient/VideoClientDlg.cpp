@@ -23,6 +23,7 @@ CVideoClientDlg::CVideoClientDlg(CWnd* pParent /*=nullptr*/)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_status = false;
+	m_length = 0.0f;
 }
 
 void CVideoClientDlg::DoDataExchange(CDataExchange* pDX)
@@ -67,7 +68,7 @@ BOOL CVideoClientDlg::OnInitDialog()
 	m_volume.SetTicFreq(20);
 	SetDlgItemText(IDC_STATIC_VOLUME, _T("100%"));
 	SetDlgItemText(IDC_STATIC_TIME, _T("--:--:-- / --:--:--"));
-	m_controller->SetWnd(GetSafeHwnd());
+	m_controller->SetWnd(m_video.GetSafeHwnd());
 	m_url.SetWindowText(_T("file:///D:\\2.5\\Github\\VideoPlay\\VideoPlay\\VideoClient\\StreetFighter6.mp4"));
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -118,12 +119,17 @@ void CVideoClientDlg::OnTimer(UINT_PTR nIDEvent)
 		//更新播放时间
 		float pos = m_controller->VideoCtrl(EVLC_GET_POSITION);
 		if (pos != -1.0f) {
-			static float length = m_controller->VideoCtrl(EVLC_GET_LENGTH);
-			m_pos.SetRange(0, length);
+			if (m_length == 0.0f) {
+				m_length = m_controller->VideoCtrl(EVLC_GET_LENGTH);
+			}
+			
+			if (m_pos.GetRangeMax() <= 1) {
+				m_pos.SetRange(0, int(m_length));
+			}
 			CString strPos;
-			strPos.Format(_T("%f"), pos);
+			strPos.Format(_T("%f/%f"), pos * m_length, m_length);
 			SetDlgItemText(IDC_STATIC_TIME, strPos);
-			m_pos.SetPos();
+			m_pos.SetPos(int(m_length * pos));
 		}
 	}
 	CDialogEx::OnTimer(nIDEvent);
@@ -190,12 +196,12 @@ void CVideoClientDlg::OnTRBNThumbPosChangingSliderVolume(NMHDR* pNMHDR, LRESULT*
 void CVideoClientDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
-	TRACE("pos %p volume %p cur %p pos %d\r\n", &m_pos, &m_volume, pScrollBar, nPos);
+	//TRACE("pos %p volume %p cur %p pos %d\r\n", &m_pos, &m_volume, pScrollBar, nPos);
 	if (nSBCode == 5) {
 		CString strPosition;
 		strPosition.Format(_T("%d%%"), nPos);
 		SetDlgItemText(IDC_STATIC_TIME, strPosition);
-		m_controller->SetPosition(float(nPos));
+		m_controller->SetPosition(float(nPos) / m_length);
 	}
 	CDialogEx::OnHScroll(nSBCode, nPos, pScrollBar);
 }
@@ -205,7 +211,7 @@ void CVideoClientDlg::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
 	if (nSBCode == 5) {
-		TRACE("pos %p volume %p cur %p pos %d\r\n", &m_pos, &m_volume, pScrollBar, nPos);
+		//TRACE("pos %p volume %p cur %p pos %d\r\n", &m_pos, &m_volume, pScrollBar, nPos);
 		CString strVolume;
 		strVolume.Format(_T("%d%%"), 100 - nPos);
 		SetDlgItemText(IDC_STATIC_VOLUME, strVolume);

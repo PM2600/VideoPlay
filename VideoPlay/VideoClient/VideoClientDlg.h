@@ -47,6 +47,7 @@ protected:
 	CSliderCtrl m_pos;
 	CSliderCtrl m_volume;
 	CEdit m_url;
+	float m_length;
 public:
 	VideoClientController* m_controller;
 };
