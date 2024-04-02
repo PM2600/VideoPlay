@@ -193,7 +193,6 @@ RTSPReply RTSPSession::Reply(const RTSPRequest& request)
         sdp << "o=- " << m_id << " 1 IN IP4 127.0.0.1\r\n";
         sdp << "t=0 0\r\n" << "a=control:*\r\n" << "m=video 0 RTP/AVP 96\r\n";
         sdp << "a=rtpmap:96 H264/90000\r\n" << "a=control:track0\r\n";
-
         reply.SetSdp(sdp);
     }
         break;
@@ -207,3 +206,62 @@ RTSPReply RTSPSession::Reply(const RTSPRequest& request)
     }
     return reply;
 }
+
+RTSPRequest::RTSPRequest()
+{
+    m_method = -1;
+}
+
+RTSPRequest::RTSPRequest(const RTSPRequest& protocol)
+{
+    m_method = protocol.m_method;
+    m_url = protocol.m_url;
+    m_session = protocol.m_session;
+    m_seq = protocol.m_seq;
+    m_client_port[0] = protocol.m_client_port[0];
+    m_client_port[1] = protocol.m_client_port[1];
+}
+
+RTSPRequest& RTSPRequest::operator=(const RTSPRequest& protocol)
+{
+    if (this != &protocol) {
+        m_method = protocol.m_method;
+        m_url = protocol.m_url;
+        m_session = protocol.m_session;
+        m_seq = protocol.m_seq;
+        m_client_port[0] = protocol.m_client_port[0];
+        m_client_port[1] = protocol.m_client_port[1];
+    }
+    return *this;
+}
+
+void RTSPRequest::SetMethod(const EBuffer& method)
+{
+    if (method == "OPTIONS") m_method = 0;
+    else if (method == "DESCRIBE") m_method = 1;
+    else if (method == "SETUP") m_method = 2;
+    else if (method == "PLAY") m_method = 3;
+    else if (method == "TEARDOWN") m_method = 4;
+}
+
+void RTSPRequest::SetUrl(const EBuffer& url)
+{
+    m_url = url;
+}
+
+void RTSPRequest::SetSequence(const EBuffer& seq)
+{
+    m_seq = seq;
+}
+
+void RTSPRequest::SetClientPort(int ports[])
+{
+    m_client_port[0] << ports[0];
+    m_client_port[1] << ports[1];
+}
+
+void RTSPRequest::SetSession(const EBuffer& session)
+{
+    m_session = session;
+}
+

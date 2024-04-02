@@ -9,18 +9,18 @@ class RTSPRequest {
 public:
 	RTSPRequest();
 	RTSPRequest(const RTSPRequest& protocol);
-	RTSPRequest operator=(const RTSPRequest& protocol);
-	~RTSPRequest();
+	RTSPRequest& operator=(const RTSPRequest& protocol);
+	~RTSPRequest() { m_method = -1; }
 	void SetMethod(const EBuffer& method);
 	void SetUrl(const EBuffer& url);
 	void SetSequence(const EBuffer& seq);
 	void SetClientPort(int ports[]);
 	void SetSession(const EBuffer& session);
-	int method() const;
-	EBuffer& url() const;
-	EBuffer& session() const;
-	EBuffer& sequence() const;
-	EBuffer& port(int index = 0) const;
+	int method() const { return m_method; }
+	const EBuffer& url() const { return m_url; }
+	const EBuffer& session() const { return m_session; }
+	const EBuffer& sequence() const { return m_seq; }
+	const EBuffer& port(int index = 0) const { return index ? m_client_port[1] : m_client_port[0]; }
 private:
 	int m_method;
 	EBuffer m_url;

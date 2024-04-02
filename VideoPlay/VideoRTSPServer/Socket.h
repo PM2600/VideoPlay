@@ -54,6 +54,12 @@ public:
 		*this += str;
 		return *this;
 	}
+	EBuffer& operator<<(int data) {
+		char s[16] = "";
+		snprintf(s, sizeof(s), "%d", data);
+		*this += s;
+		return *this;
+	}
 };
 
 class Socket
