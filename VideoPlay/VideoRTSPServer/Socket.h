@@ -31,6 +31,29 @@ public:
 		resize(size);
 		memcpy((void*)c_str(), buffer, size);
 	}
+	void Zero() {
+		if (size() > 0)
+			memset((void*)c_str(), 0, size());
+	}
+
+	EBuffer& operator<<(const EBuffer& str){
+		if (this != str) {
+			*this += str;
+		}
+		else {
+			EBuffer tmp = str;
+			*this += tmp;
+		}
+		return *this;
+	}
+	EBuffer& operator<<(const std::string& str) {
+		*this += str;
+		return *this;
+	}
+	EBuffer& operator<<(const char* str) {
+		*this += str;
+		return *this;
+	}
 };
 
 class Socket
@@ -150,7 +173,15 @@ public:
 		return ret;
 	}
 	int Send(const EBuffer& buffer) {
-		return send(*m_socket, buffer, buffer.size(), 0);
+		int index = 0;
+		char* pData = buffer;
+		while (index < buffer.size()) {
+			int ret = send(*m_socket, pData + index, buffer.size() - index, 0);
+			if (ret <= 0) return ret;
+			if (ret == 0) break;
+			index += ret;
+		}
+		return index;
 	}
 	void Close() {
 		m_socket.reset();
