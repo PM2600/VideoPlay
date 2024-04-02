@@ -18,5 +18,22 @@
     <ClCompile Include="VideoRTSPServer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="RTSPServer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Socket.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RTSPServer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="EdyThread.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CQueue.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
