@@ -1,5 +1,6 @@
 #include "RTSPServer.h"
 #include <rpc.h>
+#pragma comment(lib, "rpcrt4.lib")
 
 int RTSPServer::Init(const std::string& strIP, short port)
 {
@@ -104,7 +105,7 @@ EBuffer RTSPSession::PickOneLine(EBuffer& buffer)
     if (buffer.size() <= 0) return EBuffer();
     EBuffer result, temp;
     int i = 0;
-    for (; i < buffer.size(); i++) {
+    for (; i < (int)buffer.size(); i++) {
         result += buffer.at(i);
         if (buffer.at(i) == '\n') 
             break;
@@ -265,3 +266,96 @@ void RTSPRequest::SetSession(const EBuffer& session)
     m_session = session;
 }
 
+RTSPReply::RTSPReply()
+{
+    m_method = -1;
+}
+
+RTSPReply::RTSPReply(const RTSPReply& protocol)
+{
+    m_method = protocol.m_method;
+    m_client_port[0] = protocol.m_client_port[0];
+    m_client_port[1] = protocol.m_client_port[1];
+    m_server_port[0] = protocol.m_server_port[0];
+    m_server_port[1] = protocol.m_server_port[1];
+    m_sdp = protocol.m_sdp;
+    m_session = protocol.m_session;
+    m_seq = protocol.m_seq;
+}
+
+RTSPReply& RTSPReply::operator=(const RTSPReply& protocol)
+{
+    if (this != &protocol) {
+        m_method = protocol.m_method;
+        m_client_port[0] = protocol.m_client_port[0];
+        m_client_port[1] = protocol.m_client_port[1];
+        m_server_port[0] = protocol.m_server_port[0];
+        m_server_port[1] = protocol.m_server_port[1];
+        m_sdp = protocol.m_sdp;
+        m_session = protocol.m_session;
+        m_seq = protocol.m_seq;
+    }
+    return *this;
+}
+
+EBuffer RTSPReply::toBuffer()
+{
+    EBuffer result;
+    result << "RTSP/1.0 200 OK\r\n" << m_seq << "\r\n";
+    switch (m_method) {
+    case 0:
+        result << "Public: OPTIONS, DESCRIBE, SETUP, PLAY, TEARDOWN\r\n\r\n";
+        break;
+    case 1:
+        result << "Content-Base: 127.0.0.1\r\n";
+        result << "Content-type: application/sdp\r\n";
+        result << "Content-length: " << m_sdp.size() << "\r\n\r\n";
+        result << m_sdp;
+        break;
+    case 2:
+        result << "Transport: RTP/AVP;unicast;client_port=" << m_client_port[0] << "-" << m_client_port[1];
+        result << ";server_port=" << m_server_port[0] << "-" << m_server_port[1] << "\r\n";
+        result << "Session: " << m_session << "\r\n\r\n";
+        break;
+    case 3:
+        result << "Range: npt=0.000-\r\n";
+        result << "Session: " << m_session << "\r\n\r\n";
+        break;
+    case 4:
+        result << "Session: " << m_session << "\r\n\r\n";
+        break;
+    }
+    return result;
+}
+
+void RTSPReply::SetOptions(const EBuffer& options)
+{
+    m_options = options;
+}
+
+void RTSPReply::SetSequence(const EBuffer& seq)
+{
+    m_seq = seq;
+}
+
+void RTSPReply::SetSdp(const EBuffer& sdp)
+{
+    m_sdp = sdp;
+}
+
+void RTSPReply::SetClientPort(const EBuffer& port0, const EBuffer& port1)
+{
+    port0 >> m_client_port[0];
+    port1 >> m_client_port[1];
+}
+
+void RTSPReply::SetServerPort(const EBuffer& port0, const EBuffer& port1)
+{
+    port0 >> m_server_port[0];
+    port1 >> m_server_port[1];
+}
+
+void RTSPReply::SetSession(const EBuffer& session)
+{
+    m_session = session;
+}

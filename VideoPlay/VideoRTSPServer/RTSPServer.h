@@ -1,6 +1,6 @@
 #pragma once
-#include "CQueue.h"
 #include "Socket.h"
+#include "CQueue.h"
 #include <string>
 #include "EdyThread.h"
 #include <map>
@@ -33,8 +33,8 @@ class RTSPReply {
 public:
 	RTSPReply();
 	RTSPReply(const RTSPReply& protocol);
-	RTSPReply operator=(const RTSPReply& protocol);
-	~RTSPReply();
+	RTSPReply& operator=(const RTSPReply& protocol);
+	~RTSPReply() {}
 	EBuffer toBuffer();
 	void SetOptions(const EBuffer& options);
 	void SetSequence(const EBuffer& seq);
@@ -49,6 +49,7 @@ private:
 	std::string m_sdp;
 	EBuffer m_options;
 	EBuffer m_session;
+	EBuffer m_seq;
 };
 
 class RTSPSession {
