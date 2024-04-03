@@ -2,6 +2,8 @@
 #include <rpc.h>
 #pragma comment(lib, "rpcrt4.lib")
 
+SocketIniter RTSPServer::m_initer;
+
 int RTSPServer::Init(const std::string& strIP, short port)
 {
     m_addr.Update(strIP, port);
@@ -13,6 +15,7 @@ int RTSPServer::Init(const std::string& strIP, short port)
 int RTSPServer::Invoke()
 {
     m_threadMain.Start();
+    m_pool.Invoke();
     return 0;
 }
 
@@ -138,6 +141,7 @@ EBuffer RTSPSession::Pick()
 
 RTSPRequest RTSPSession::AnalyseRequest(const EBuffer& buffer)
 {
+    TRACE("%s\r\n", (char*)buffer);
     EBuffer data = buffer;
     RTSPRequest request;
     EBuffer line = PickOneLine(data);
