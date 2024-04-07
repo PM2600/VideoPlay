@@ -10,11 +10,10 @@ int RTPHelper::SendMediaFrame(EBuffer& frame)
     frame_size -= sepsize;
     BYTE* pFrame = sepsize + (BYTE*)frame;
 
-
     if (frame_size > RTP_MAX_SIZE) { //分片
         BYTE nalu = pFrame[0] & 0x1F;
         size_t restsize = frame_size % RTP_MAX_SIZE;
-        size_t count = frame_size / RTP_MAX_SIZE;
+        size_t count = frame_size / RTP_MAX_SIZE; //要分包的个数
         for (size_t i = 0; i < count; i++) {
             rtpframe.m_pyload.resize(RTP_MAX_SIZE);
             ((BYTE*)rtpframe.m_pyload)[0] = 0x60 | 28; //0110 0000 | 0001 1100
