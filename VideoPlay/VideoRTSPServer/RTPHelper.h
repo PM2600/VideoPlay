@@ -1,5 +1,6 @@
 #pragma once
 #include "base.h"
+#include "Socket.h"
 class RTPHeader
 {
 public:
@@ -15,11 +16,10 @@ public:
 	unsigned csrc[15];
 
 public:
-	//RTPHeader();
-	//operator EBuffer();
-	~RTPHeader() {
-
-	}
+	RTPHeader();
+	RTPHeader(const RTPHeader& header);
+	RTPHeader& operator=(const RTPHeader& header);
+	operator EBuffer();
 };
 
 class RTPFrame
@@ -27,15 +27,20 @@ class RTPFrame
 public:
 	RTPHeader m_head;
 	EBuffer m_pyload;
+	operator EBuffer();
 };
 
 class RTPHelper
 {
 public:
-	RTPHelper();
-	~RTPHelper();
-	int SendMediaFrame(EBuffer& frame);
+	RTPHelper() : timestamp(0), m_udp(false){}
+	~RTPHelper(){}
+	int SendMediaFrame(RTPFrame& rtpframe, EBuffer& frame, const EAddress& client);
 private:
 	int GetFrameSepSize(EBuffer& frame);
+	int SendFrame(const EBuffer& frame, const EAddress& client);
+	DWORD timestamp;
+	ESocket m_udp;
+	
 };
 

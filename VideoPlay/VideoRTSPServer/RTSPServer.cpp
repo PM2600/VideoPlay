@@ -48,7 +48,9 @@ int RTSPServer::ThreadSession()
     //接收数据请求，解析请求，应答请求
     RTSPSession session;   
     if (m_lstSession.PopFront(session)) {
-        return session.PickRequestAndReply();
+        int ret = session.PickRequestAndReply();
+
+        return ret;
     }
     return -1;
 }
@@ -197,6 +199,7 @@ RTSPReply RTSPSession::Reply(const RTSPRequest& request)
         sdp << "v=0\r\n";
         sdp << "o=- " << m_id << " 1 IN IP4 127.0.0.1\r\n";
         sdp << "t=0 0\r\n" << "a=control:*\r\n" << "m=video 0 RTP/AVP 96\r\n";
+        sdp << "a=framerate:24\r\n";
         sdp << "a=rtpmap:96 H264/90000\r\n" << "a=control:track0\r\n";
         reply.SetSdp(sdp);
     }

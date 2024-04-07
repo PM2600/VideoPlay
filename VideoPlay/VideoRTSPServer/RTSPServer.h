@@ -1,8 +1,9 @@
 #pragma once
 #include "Socket.h"
 #include "CQueue.h"
-#include <string>
 #include "EdyThread.h"
+#include "RTPHelper.h"
+#include <string>
 #include <map>
 
 class RTSPRequest {
@@ -93,4 +94,5 @@ private:
 	EdyThread m_threadMain;
 	EdyThreadPool m_pool;
 	CQueue<RTSPSession> m_lstSession;
+	RTPHelper m_helper;
 };
