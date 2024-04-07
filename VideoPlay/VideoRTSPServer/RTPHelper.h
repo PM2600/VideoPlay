@@ -22,13 +22,20 @@ public:
 	}
 };
 
+class RTPFrame
+{
+public:
+	RTPHeader m_head;
+	EBuffer m_pyload;
+};
+
 class RTPHelper
 {
 public:
 	RTPHelper();
 	~RTPHelper();
+	int SendMediaFrame(EBuffer& frame);
 private:
-	RTPHeader m_head;
-	EBuffer m_pyload;
+	int GetFrameSepSize(EBuffer& frame);
 };
 
