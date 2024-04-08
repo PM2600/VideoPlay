@@ -46,6 +46,12 @@ public:
 		memset(&m_addr, 0, sizeof(m_addr));
 		m_addr.sin_family = AF_INET;
 	}
+	EAddress(const std::string& ip, short port) {
+		m_ip = ip;
+		m_port = port;
+		m_addr.sin_port = htons(port);
+		m_addr.sin_addr.s_addr = inet_addr(ip.c_str());
+	}
 	EAddress(const EAddress& addr) {
 		m_ip = addr.m_ip;
 		m_port = addr.m_port;
@@ -59,6 +65,11 @@ public:
 		}
 		return *this;
 	}
+	EAddress& operator=(short port) {
+		m_port = port;
+		m_addr.sin_port = htons(port);
+		return *this;
+	}
 	~EAddress() {}
 	void Update(const std::string& ip, short port) {
 		m_ip = ip;
@@ -66,6 +77,7 @@ public:
 		m_addr.sin_port = htons(port);
 		m_addr.sin_addr.s_addr = inet_addr(ip.c_str());
 	}
+
 	operator const sockaddr* () const {
 		return (sockaddr*)&m_addr;
 	}
@@ -97,7 +109,7 @@ public:
 	~ESocket() {
 		m_socket.reset();
 	}
-	operator SOCKET() {
+	operator SOCKET() const{
 		return *m_socket;
 	}
 	int Bind(const EAddress& addr) {

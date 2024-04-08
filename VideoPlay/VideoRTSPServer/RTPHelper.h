@@ -33,7 +33,9 @@ public:
 class RTPHelper
 {
 public:
-	RTPHelper() : timestamp(0), m_udp(false){}
+	RTPHelper() : timestamp(0), m_udp(false){
+		m_udp.Bind(EAddress("0.0.0.0", 55000));
+	}
 	~RTPHelper(){}
 	int SendMediaFrame(RTPFrame& rtpframe, EBuffer& frame, const EAddress& client);
 private:
@@ -41,6 +43,5 @@ private:
 	int SendFrame(const EBuffer& frame, const EAddress& client);
 	DWORD timestamp;
 	ESocket m_udp;
-	
 };
 
