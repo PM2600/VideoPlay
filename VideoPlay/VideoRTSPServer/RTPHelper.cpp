@@ -59,11 +59,7 @@ int RTPHelper::GetFrameSepSize(EBuffer& frame)
 
 int RTPHelper::SendFrame(const EBuffer& frame, const EAddress& client)
 {
-    fwrite(frame, 1, frame.size(), m_file);
-    fwrite("00000000", 1, 8, m_file);
-    fflush(m_file);
     int ret = sendto(m_udp, frame, frame.size(), 0, client, client.size());
-    printf("ret %d size %d ip %s port %d\r\n", ret, frame.size(), client.Ip().c_str(), client.Port());
     return 0;
 }
 
