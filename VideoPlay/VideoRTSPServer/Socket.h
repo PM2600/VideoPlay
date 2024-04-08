@@ -66,7 +66,7 @@ public:
 		return *this;
 	}
 	EAddress& operator=(short port) {
-		m_port = port;
+		m_port = (unsigned short)port;
 		m_addr.sin_port = htons(port);
 		return *this;
 	}
@@ -88,9 +88,20 @@ public:
 		return &m_addr;
 	}
 	int size() const {return sizeof(sockaddr_in);}
+
+	const std::string Ip() const {
+		return m_ip;
+	}
+
+	unsigned short Port()const {
+		return m_port;
+	}
+	void Fresh() {
+		m_ip = inet_ntoa(m_addr.sin_addr);
+	}
 private:
 	std::string m_ip;
-	short m_port;
+	unsigned short m_port;
 	sockaddr_in m_addr;
 };
 
@@ -127,7 +138,7 @@ public:
 		if(m_socket == nullptr) return ESocket(INVALID_SOCKET, true);
 		SOCKET server = *m_socket;
 		if (server == INVALID_SOCKET) return ESocket(INVALID_SOCKET, true);
-		SOCKET s = accept(*m_socket, addr, &len);
+		SOCKET s = accept(server, addr, &len);
 		return ESocket(s, m_istcp);
 	}
 	int Connect(const EAddress& addr) {
@@ -152,6 +163,8 @@ public:
 	void Close() {
 		m_socket.reset();
 	}
+
+
 private:
 	std::shared_ptr<Socket> m_socket;
 	bool m_istcp;

@@ -14,28 +14,33 @@ int RTPHelper::SendMediaFrame(RTPFrame& rtpframe, EBuffer& frame, const EAddress
         size_t restsize = frame_size % RTP_MAX_SIZE;
         size_t count = frame_size / RTP_MAX_SIZE; //要分包的个数
         for (size_t i = 0; i < count; i++) {
-            rtpframe.m_pyload.resize(RTP_MAX_SIZE);
+            rtpframe.m_pyload.resize(RTP_MAX_SIZE + 2);
             ((BYTE*)rtpframe.m_pyload)[0] = 0x60 | 28; //0110 0000 | 0001 1100
             ((BYTE*)rtpframe.m_pyload)[1] = nalu;      //0000 0000 中间
             if(i == 0)
-                ((BYTE*)rtpframe.m_pyload)[1] = 0x80 | ((BYTE*)rtpframe.m_pyload)[1]; //开始1000 0000 & 0001 1111        
+                ((BYTE*)rtpframe.m_pyload)[1] |= 0x80; //开始1000 0000 & 0001 1111        
             else if ((restsize == 0) && (i == count - 1))
-                ((BYTE*)rtpframe.m_pyload)[1] = 0x40 | ((BYTE*)rtpframe.m_pyload)[1]; //结束0100 0000
+                ((BYTE*)rtpframe.m_pyload)[1] |= 0x40; //结束0100 0000
 
-            memcpy(2 + (BYTE*)rtpframe.m_pyload, pFrame + RTP_MAX_SIZE * i, RTP_MAX_SIZE);        
+            memcpy(2 + (BYTE*)rtpframe.m_pyload, pFrame + RTP_MAX_SIZE * i + 1, RTP_MAX_SIZE);        
             SendFrame(rtpframe, client);
             rtpframe.m_head.serial++;
         }
     
-        if (restsize > 0) {  //处理尾巴           
+        if (restsize > 0) {  //处理尾巴 
+            rtpframe.m_pyload.resize(restsize + 2);
+            ((BYTE*)rtpframe.m_pyload)[0] = 0x60 | 28;
+            ((BYTE*)rtpframe.m_pyload)[1] = nalu;
             ((BYTE*)rtpframe.m_pyload)[1] = 0x40 | ((BYTE*)rtpframe.m_pyload)[1]; //结束0100 0000
+            memcpy(2 + (BYTE*)rtpframe.m_pyload, pFrame + RTP_MAX_SIZE * count + 1, restsize);
             SendFrame(rtpframe, client);
             rtpframe.m_head.serial++;
         }      
     }
     else {  //小包发送
         rtpframe.m_pyload.resize(frame.size() - sepsize);
-        memcpy(rtpframe.m_pyload, frame, frame.size() - sepsize);
+        memcpy(rtpframe.m_pyload, pFrame, frame.size() - sepsize);
+        SendFrame(rtpframe, client);
         rtpframe.m_head.serial++;       
     }
     rtpframe.m_head.timestamp += 90000 / 24;
@@ -54,8 +59,11 @@ int RTPHelper::GetFrameSepSize(EBuffer& frame)
 
 int RTPHelper::SendFrame(const EBuffer& frame, const EAddress& client)
 {
+    fwrite(frame, 1, frame.size(), m_file);
+    fwrite("00000000", 1, 8, m_file);
+    fflush(m_file);
     int ret = sendto(m_udp, frame, frame.size(), 0, client, client.size());
-
+    printf("ret %d size %d ip %s port %d\r\n", ret, frame.size(), client.Ip().c_str(), client.Port());
     return 0;
 }
 
@@ -95,8 +103,7 @@ RTPHeader::operator EBuffer()
     header.serial = htons(header.serial);
     header.timestamp = htonl(header.timestamp);
     header.ssrc = htonl(header.ssrc);
-
-    int size = 14 + 4 * csrccount;
+    int size = 12 + 4 * csrccount;
     EBuffer result(size);
     memcpy(result, &header, size);
     return result;

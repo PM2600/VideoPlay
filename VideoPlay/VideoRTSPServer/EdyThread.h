@@ -23,7 +23,6 @@ public:
 #endif
 
 class ThreadFuncBase {};
-
 typedef int (ThreadFuncBase::* FUNCTYPE)();
 
 class ThreadWorker {
@@ -101,7 +100,7 @@ public:
 			m_worker.store(NULL);
 			delete pWorker;
 		}
-		if (m_worker.load() != &worker)
+		if (m_worker.load() == &worker)
 			return;
 		if (!worker.IsValid()) {
 			m_worker.store(NULL);

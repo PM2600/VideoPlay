@@ -11,7 +11,7 @@ public:
 	void Close();
 	void Reset(); //重置后，ReadOneFrame又会有值返回
 private:
-	long FindH264Head();
+	long FindH264Head(int& headsize);
 	EBuffer ReadH264Frame();
 private:
 	long m_size;

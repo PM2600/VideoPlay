@@ -33,8 +33,8 @@ RTSPServer::~RTSPServer()
 
 int RTSPServer::threadWorker()
 {
-    EAddress clientaddr;
-    ESocket client = m_socket.Accept(clientaddr);
+    EAddress client_addr;
+    ESocket client = m_socket.Accept(client_addr);
     if (client != INVALID_SOCKET) {
         RTSPSession session(client);
         m_lstSession.PushBack(session);
@@ -71,10 +71,11 @@ void RTSPServer::UdpWorker(const EAddress& client)
 
 RTSPSession::RTSPSession()
 {
+    m_port = -1;
     UUID uuid;
     UuidCreate(&uuid);
     m_id.resize(8);
-    snprintf((char*)m_id.c_str(), m_id.size(), "%08d", uuid.Data1);
+    snprintf((char*)m_id.c_str(), m_id.size(), "%u%u", uuid.Data1, uuid.Data2);
 }
 
 RTSPSession::RTSPSession(const ESocket& client) : m_client(client)
@@ -82,13 +83,15 @@ RTSPSession::RTSPSession(const ESocket& client) : m_client(client)
     UUID uuid;
     UuidCreate(&uuid);
     m_id.resize(8);
-    snprintf((char*)m_id.c_str(), m_id.size(), "%08d", uuid.Data1);
+    snprintf((char*)m_id.c_str(), m_id.size(), "%u%u", uuid.Data1, uuid.Data2);
+    m_port = -1;
 }
 
 RTSPSession::RTSPSession(const RTSPSession& session)
 {
     m_id = session.m_id;
     m_client = session.m_client;
+    m_port = session.m_port;
 }
 
 RTSPSession& RTSPSession::operator=(const RTSPSession& session)
@@ -102,24 +105,28 @@ RTSPSession& RTSPSession::operator=(const RTSPSession& session)
 
 int RTSPSession::PickRequestAndReply(RTSPPLAYCB cb, RTSPServer* thiz)
 {
-    EBuffer buffer = Pick();
-    if (buffer.size() <= 0) {
-        return -1;
-    }
-    RTSPRequest req = AnalyseRequest(buffer);
-    if (req.method() < 0) {
-        TRACE("buffer[%s]\r\n", (char*)buffer);
-        return -2;
-    }
-    RTSPReply rep = Reply(req);
-    int ret = m_client.Send(rep.toBuffer());
-    if (req.method() == 3) {
-        m_port = (short)atoi(req.port());
-        cb(thiz, *this);
-    }
-    if (ret < 0)
-        return ret;
+    int ret = -1;
+    do {
 
+        EBuffer buffer = Pick();
+        if (buffer.size() <= 0) {
+            return -1;
+        }
+        RTSPRequest req = AnalyseRequest(buffer);
+        if (req.method() < 0) {
+            TRACE("buffer[%s]\r\n", (char*)buffer);
+            return -2;
+        }
+        RTSPReply rep = Reply(req);
+        ret = m_client.Send(rep.toBuffer());
+        if (req.method() == 2) {
+            m_port = (short)atoi(req.port());
+        }
+        if (req.method() == 3) {
+            cb(thiz, *this);
+        }
+    } while (ret >= 0);
+    if (ret < 0) return ret;
     return 0;
 }
 
@@ -128,6 +135,7 @@ EAddress RTSPSession::GetClientUDPAddress() const
     EAddress addr;
     int len = addr.size();
     getsockname(m_client, addr, &len);
+    addr.Fresh();
     addr = m_port;
     return addr;
 }
@@ -142,7 +150,7 @@ EBuffer RTSPSession::PickOneLine(EBuffer& buffer)
         if (buffer.at(i) == '\n') 
             break;
     }
-    temp = i + (char*)buffer;
+    temp = i + 1 + (char*)buffer;
     buffer = temp;
     return result;
 }
@@ -170,9 +178,12 @@ EBuffer RTSPSession::Pick()
 
 RTSPRequest RTSPSession::AnalyseRequest(const EBuffer& buffer)
 {
-    TRACE("%s\r\n", (char*)buffer);
-    EBuffer data = buffer;
+    TRACE("<%s>\r\n", (char*)buffer);
+
     RTSPRequest request;
+    if (buffer.size() <= 0)
+        return request;
+    EBuffer data = buffer;
     EBuffer line = PickOneLine(data);
     EBuffer method(32), url(1024), version(16), seq(64);
     if (sscanf(line, "%s %s %s\r\n", (char*)method, (char*)url, (char*)version) < 3) {
@@ -191,7 +202,11 @@ RTSPRequest RTSPSession::AnalyseRequest(const EBuffer& buffer)
         return request;
     }
     else if (strcmp(method, "SETUP") == 0) {
-        line = PickOneLine(data);
+        do {
+            line = PickOneLine(data);
+            if (strstr((const char*)line, "client_port=") == NULL) continue;
+            break;
+        } while (line.size() > 0);
         int port[2] = { 0,0 };
         if (sscanf(line, "Transport: RTP/AVP;unicast;client_port=%d-%d\r\n", port, port + 1) == 2) {
             request.SetClientPort(port);
@@ -216,6 +231,10 @@ RTSPReply RTSPSession::Reply(const RTSPRequest& request)
     if (request.session().size() > 0) {
         reply.SetSession(request.session());
     }
+    else {
+        reply.SetSession(m_id);
+    }
+    reply.setMethod(request.method());
     switch (request.method()) {
     case 0: //OPTIONS
         reply.SetOptions("Public: OPTIONS, DESCRIBE, SETUP, PLAY, TEARDOWN\r\n");
@@ -224,7 +243,7 @@ RTSPReply RTSPSession::Reply(const RTSPRequest& request)
     {
         EBuffer sdp;
         sdp << "v=0\r\n";
-        sdp << "o=- " << m_id << " 1 IN IP4 127.0.0.1\r\n";
+        sdp << "o=- " << (char*)m_id << " 1 IN IP4 127.0.0.1\r\n";
         sdp << "t=0 0\r\n" << "a=control:*\r\n" << "m=video 0 RTP/AVP 96\r\n";
         sdp << "a=framerate:24\r\n";
         sdp << "a=rtpmap:96 H264/90000\r\n" << "a=control:track0\r\n";
@@ -232,8 +251,9 @@ RTSPReply RTSPSession::Reply(const RTSPRequest& request)
     }
         break;
     case 2: //SETUP
-        reply.SetClientPort(request.port(0), request.port(1));
+        reply.SetClientPort(request.port(), request.port(1));
         reply.SetServerPort("55000", "55001");
+        reply.SetSession(m_id);
         break;
     case 3: //PLAY
     case 4: //TEARDOWN
@@ -272,21 +292,21 @@ RTSPRequest& RTSPRequest::operator=(const RTSPRequest& protocol)
 
 void RTSPRequest::SetMethod(const EBuffer& method)
 {
-    if (method == "OPTIONS") m_method = 0;
-    else if (method == "DESCRIBE") m_method = 1;
-    else if (method == "SETUP") m_method = 2;
-    else if (method == "PLAY") m_method = 3;
-    else if (method == "TEARDOWN") m_method = 4;
+    if (strcmp(method, "OPTIONS") == 0) m_method = 0;
+    else if (strcmp(method, "DESCRIBE") == 0) m_method = 1;
+    else if (strcmp(method, "SETUP") == 0) m_method = 2;
+    else if (strcmp(method, "PLAY") == 0) m_method = 3;
+    else if (strcmp(method, "TEARDOWN") == 0) m_method = 4;
 }
 
 void RTSPRequest::SetUrl(const EBuffer& url)
 {
-    m_url = url;
+    m_url = (char*)url;
 }
 
 void RTSPRequest::SetSequence(const EBuffer& seq)
 {
-    m_seq = seq;
+    m_seq = (char*)seq;
 }
 
 void RTSPRequest::SetClientPort(int ports[])
@@ -297,7 +317,7 @@ void RTSPRequest::SetClientPort(int ports[])
 
 void RTSPRequest::SetSession(const EBuffer& session)
 {
-    m_session = session;
+    m_session = (char*)session;
 }
 
 RTSPReply::RTSPReply()
@@ -344,22 +364,27 @@ EBuffer RTSPReply::toBuffer()
         result << "Content-Base: 127.0.0.1\r\n";
         result << "Content-type: application/sdp\r\n";
         result << "Content-length: " << m_sdp.size() << "\r\n\r\n";
-        result << m_sdp;
+        result << (char*)m_sdp;
         break;
     case 2:
         result << "Transport: RTP/AVP;unicast;client_port=" << m_client_port[0] << "-" << m_client_port[1];
         result << ";server_port=" << m_server_port[0] << "-" << m_server_port[1] << "\r\n";
-        result << "Session: " << m_session << "\r\n\r\n";
+        result << "Session: " << (char*)m_session << "\r\n\r\n";
         break;
     case 3:
         result << "Range: npt=0.000-\r\n";
-        result << "Session: " << m_session << "\r\n\r\n";
+        result << "Session: " << (char*)m_session << "\r\n\r\n";
         break;
     case 4:
-        result << "Session: " << m_session << "\r\n\r\n";
+        result << "Session: " << (char*)m_session << "\r\n\r\n";
         break;
     }
     return result;
+}
+
+void RTSPReply::setMethod(int method)
+{
+    m_method = method;
 }
 
 void RTSPReply::SetOptions(const EBuffer& options)

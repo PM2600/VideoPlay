@@ -22,7 +22,10 @@ public:
 	const EBuffer& url() const { return m_url; }
 	const EBuffer& session() const { return m_session; }
 	const EBuffer& sequence() const { return m_seq; }
-	const EBuffer& port(int index = 0) const { return index ? m_client_port[1] : m_client_port[0]; }
+	const EBuffer& port(int index = 0) const 
+	{
+		return index ? m_client_port[1] : m_client_port[0]; 
+	}
 private:
 	int m_method;
 	EBuffer m_url;
@@ -38,6 +41,7 @@ public:
 	RTSPReply& operator=(const RTSPReply& protocol);
 	~RTSPReply() {}
 	EBuffer toBuffer();
+	void setMethod(int method);
 	void SetOptions(const EBuffer& options);
 	void SetSequence(const EBuffer& seq);
 	void SetSdp(const EBuffer& sdp);
@@ -46,9 +50,10 @@ public:
 	void SetSession(const EBuffer& session);
 private:
 	int m_method;
-	short m_client_port[2];
-	short m_server_port[2];
-	std::string m_sdp;
+	int m_client_port[2];
+	int m_server_port[2];
+	//std::string m_sdp;
+	EBuffer m_sdp;
 	EBuffer m_options;
 	EBuffer m_session;
 	EBuffer m_seq;
@@ -73,7 +78,7 @@ private:
 	RTSPRequest AnalyseRequest(const EBuffer& buffer);
 	RTSPReply Reply(const RTSPRequest& request);
 private:
-	std::string m_id;
+	EBuffer m_id;
 	ESocket m_client;
 	short m_port;
 };

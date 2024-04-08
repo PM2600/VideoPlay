@@ -50,7 +50,7 @@ public:
 		return *this;
 	}
 	EBuffer& operator<<(const char* str) {
-		*this += str;
+		*this += EBuffer(str);
 		return *this;
 	}
 	EBuffer& operator<<(int data) {
