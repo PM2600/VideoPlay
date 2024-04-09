@@ -2,6 +2,6 @@
 
 vlc库
 
-RTSP协议：RTP、RTCP
+RTSP协议：RTP
 
 h264
