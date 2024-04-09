@@ -107,7 +107,6 @@ int RTSPSession::PickRequestAndReply(RTSPPLAYCB cb, RTSPServer* thiz)
 {
     int ret = -1;
     do {
-
         EBuffer buffer = Pick();
         if (buffer.size() <= 0) {
             return -1;
