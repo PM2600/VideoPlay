@@ -1,7 +1,6 @@
 # 音视频系统
 
-vlc库
-
-RTSP协议：RTP协议
-
-h264
+- vlc开源库
+- RTSP协议、RTP协议
+- sdp数据格式
+- h264
