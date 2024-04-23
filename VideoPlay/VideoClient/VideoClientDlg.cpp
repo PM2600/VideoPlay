@@ -115,7 +115,6 @@ HCURSOR CVideoClientDlg::OnQueryDragIcon()
 
 void CVideoClientDlg::OnTimer(UINT_PTR nIDEvent)
 {
-	// TODO: 在此添加消息处理程序代码和/或调用默认值
 	if (nIDEvent == 0) {
 		//更新音量
 		//更新播放时间
@@ -205,7 +204,7 @@ void CVideoClientDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 		SetDlgItemText(IDC_STATIC_TIME, strPosition);
 		m_controller->SetPosition(float(nPos) / m_length);
 	}
-	CDialogEx::OnHScroll(nSBCode, nPos, pScrollBar);
+	CDialogEx::OnHScroll(nSBCode, nPos, pScrollBar); //清除相关资源
 }
 
 //音量条
