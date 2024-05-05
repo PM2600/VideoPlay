@@ -155,6 +155,8 @@ private:
 	std::atomic<::ThreadWorker*> m_worker;
 };
 
+
+
 class EdyThreadPool {
 public:
 	EdyThreadPool(size_t size) {
