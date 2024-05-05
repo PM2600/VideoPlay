@@ -127,7 +127,7 @@ private:
 			::ThreadWorker worker = *m_worker.load();
 			if (worker.IsValid()) {
 				if (WaitForSingleObject(m_hThread, 0) == WAIT_TIMEOUT) {
-					int ret = worker();
+					int ret = worker(); //重载运算符()，执行函数
 					if (ret != 0) {
 						TRACE("thread found warning code %d\r\n", ret);
 					}
