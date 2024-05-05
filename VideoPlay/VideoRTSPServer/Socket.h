@@ -164,7 +164,6 @@ public:
 		m_socket.reset();
 	}
 
-
 private:
 	std::shared_ptr<Socket> m_socket;
 	bool m_istcp;
